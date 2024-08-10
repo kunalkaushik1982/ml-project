@@ -3,7 +3,8 @@ import sys
 from dataclasses import dataclass
 
 from catboost import CatBoostRegressor
-from sklearn.ensemble import(AdaBoostRegressor,GradientBoostingRegressor,RandomForestRegressor)
+from sklearn.ensemble import(AdaBoostRegressor,GradientBoostingRegressor,RandomForestRegressor,)
+
 
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
@@ -13,7 +14,7 @@ from xgboost import XGBRegressor
 
 from src.exception import CustomException
 from src.logger import logging
-from src.utils import save_object,evaluate_model
+from src.utils import save_object,evaluate_models
 
 @dataclass
 class ModelTrainerConfig:
@@ -21,26 +22,26 @@ class ModelTrainerConfig:
     
 class ModelTrainer:
     def __init__(self):
-        self.model_trainer_config=ModelTrainerConfig
+        self.model_trainer_config=ModelTrainerConfig()
+        
     def initiate_model_trainer(self,train_array,test_array):
         try:
-            logging.info("Split Train & Test Input Data")
+            logging.info("Split training and test input data")
             X_train,y_train,X_test,y_test=(
                 train_array[:,:-1],
                 train_array[:,-1],
                 test_array[:,:-1],
                 test_array[:,-1]
                 )
-            
-            models={
-                "Random Forest":RandomForestRegressor(),
-                "Decision Tree":DecisionTreeRegressor(),
-                "Gradient Boosting":GradientBoostingRegressor(),
-                "Linear Regression":LinearRegression(),
-                "K-Neighbours Regression":KNeighborsRegressor(),
-                "XGBRegressor":XGBRegressor(),
-                "CatBoosting Regressor":CatBoostRegressor(verbose=0),
-                "AdaBoost Regressor":AdaBoostRegressor(),            
+                        
+            models = {
+                "Random Forest": RandomForestRegressor(),
+                "Decision Tree": DecisionTreeRegressor(),
+                "Gradient Boosting": GradientBoostingRegressor(),
+                "Linear Regression": LinearRegression(),
+                "XGBRegressor": XGBRegressor(),
+                "CatBoosting Regressor": CatBoostRegressor(verbose=False),
+                "AdaBoost Regressor": AdaBoostRegressor(),
             }
             
             params={
@@ -64,7 +65,6 @@ class ModelTrainer:
                     'n_estimators': [8,16,32,64,128,256]
                 },
                 "Linear Regression":{},
-                "K-Neighbours Regression":{},
                 "XGBRegressor":{
                     'learning_rate':[.1,.01,.05,.001],
                     'n_estimators': [8,16,32,64,128,256]
@@ -82,7 +82,8 @@ class ModelTrainer:
                 
             }
             
-            model_report:dict=evaluate_model(X_train=X_train,y_train=y_train,X_test=X_test,y_test=y_test,models=models,param=params)            
+            model_report:dict=evaluate_models(X_train=X_train,y_train=y_train,X_test=X_test,y_test=y_test,models=models,param=params)
+            
             #To get best model score from dict
             best_model_score=max(sorted(model_report.values()))
             #To get best model name from dict
@@ -96,7 +97,7 @@ class ModelTrainer:
             logging.info(f"Best found model on both training and test dataset")
             
             
-            save_object(file_path=self.model_trainer_config.trained_model_file_path,obj=models)
+            save_object(file_path=self.model_trainer_config.trained_model_file_path,obj=best_model)
             
             predicated=best_model.predict(X_test)
             r2_square=r2_score(y_test,predicated)
